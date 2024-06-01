@@ -10,7 +10,9 @@ package climatemonitoring;
  * Importazione del separatore dalla classe main 'ClimateMonitor'
  */
 import static climatemonitoring.ClimateMonitor.sep;
-
+import static climatemonitoring.Home.DB_PASS;
+import static climatemonitoring.Home.DB_URL;
+import static climatemonitoring.Home.DB_USER;
 /**
  * Richiamo Librerie di Java
  */
@@ -40,12 +42,6 @@ public class Accesso extends javax.swing.JDialog {
       * Creo una finistra speculare alla Home, in versione 'Operatore' con privilegi e funzioni aggiuntive.
       */
     Home hh;
-    /**
-    * Dichirazione dettagli per la connessione al Database
-    */
-    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
-    private static final String DB_USER = "postgres";
-    private static final String DB_PASS = "password";
      /**
       * Costruttore <strong>base</strong> (senza parametri)
       */

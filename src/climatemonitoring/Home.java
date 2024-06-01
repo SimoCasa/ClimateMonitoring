@@ -13,6 +13,11 @@ import static climatemonitoring.ClimateMonitor.sep;
 /**
  * Richiamo Librerie.
  */
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.ResultSet;
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
@@ -31,6 +36,12 @@ import javax.swing.table.DefaultTableModel;
  * @author 755531 Bonacina Davide
  */
 public class Home extends JFrame {
+    /**
+    * Dichirazione dettagli per la connessione al Database
+    */
+    static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
+    static final String DB_USER = "postgres";
+    static final String DB_PASS = "password";
     /**
      * Dichiarazione variabili utente registrato
      */
@@ -486,6 +497,7 @@ public class Home extends JFrame {
              * Generazione finestra di errore con specifica dell'errore (mancato inserimento)
              */
             JOptionPane.showMessageDialog(null, "Non hai inserito alcun nome!","Errore!", JOptionPane.ERROR_MESSAGE);
+            resLabel.setVisible(false);
         }else{
             /**
              * Richiamo funzione cercaAreaGeografica, dato il nome
@@ -525,6 +537,7 @@ public class Home extends JFrame {
              * Generazione finestra di errore con specifica dell'errore (coordinate non valide)
              */
             JOptionPane.showMessageDialog(null, "Coordinate non valide!","Errore!", JOptionPane.ERROR_MESSAGE); 
+            resLabel.setVisible(false);
         }else{
             try{
                 /**
@@ -983,71 +996,44 @@ public class Home extends JFrame {
      * Gestita eccezione: IOException eccezione per mancanza file, directory errata
      */
     public void cercaAreaGeografica(String nome){
-        /**
-         * Imposto la linea e il lettore su valore 'nullo' iniziale
-         */
-        String line = null;
-        FileReader in = null;
-        /**
-         * Creazione Array delle Aree geografiche come appoggio per la visualizzazione
-         */
-        ArrayList<String> Aree = new ArrayList<String>();
-        /**
-         * Dichiarazione variabili su valore base
-         */
-        boolean ck = false;
-        int count=0;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
         try {
-              /**
-               * Imposto il lettore di riga con l'apposito separatore (dichiarato inizialmente)
-               * Leggo dal file 'CoordinateMonitoraggio.dati'
-               */
-              in = new FileReader("data"+sep+"CoordinateMonitoraggio.dati");
-              /**
-               * Buffer per la lettura
-               */
-              BufferedReader br = new BufferedReader(in);
-              /**
-               * Scanner usato in fase di debug (inserimento da riga di comando), poi disattivato
-               */
-              //Scanner sc = new Scanner(System.in);
-              /**
-               * Dichiarazione separatore di ricerca, coincide con il separatore usato nel file 'CoordinateMonitoraggio.dati'
-               */
-              String splitBy = ";";
-              /**
-               * Ciclo di lettetura del file per ricerca corrispondenza area geografica, conclusione a riga 'nulla'
-               */
-              while ((line = br.readLine()) !=null) {                  
-                  String[] Area = line.split(splitBy);
-                  if(ck){
-                    if(Area[2].toLowerCase().contains(nome.toLowerCase()) || Area[2].toLowerCase().contains(nome.toLowerCase())) {
-                        /**
-                         * Creazione tabella con 'Area Geografiche' estratti dal file 'CoordinateMonitoraggio.dati'
-                         * Utilizzo metodo 'addRowTable' per creare le righe
-                         */
-                        addRowTable(new String[]{Area[0], Area[2], Area[4],Area[3]});
-                        count++;
-                    } 
-                  }
-                  ck=true;
-              }
-            }catch (IOException e) {
-                  /**
-                   * Cattura errore in caso di mancato funzionamento del metodo 'cercaAreaGeografica'
-                   * Scrittura su riga di comando dell'errore per debug
-                   */
-                  //System.out.print(e);
-                  /**
-                   * Generazione finestra di errore con specifica dell'errore (File error)
-                   */
-                  JOptionPane.showMessageDialog(null, e,"File Error!", JOptionPane.ERROR_MESSAGE);
-        }
-        if(count==0){
-             /**
-              * Generazione finestra di errore con specifica dell'errore (Area geografica assente)
-              */
-            JOptionPane.showMessageDialog(null, "Non è stato trovato alcun risultato!","Errore di ricerca", JOptionPane.ERROR_MESSAGE);
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+            String sql = "SELECT GeoNameID, Name, CountryName, CountryCode FROM CoordinateMonitoraggio WHERE LOWER(Name) LIKE LOWER(?)";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, "%" + nome + "%");
+
+            rs = pstmt.executeQuery();
+
+            int count = 0;
+            while (rs.next()) {
+                String id = rs.getString("GeoNameID");
+                String nomeArea = rs.getString("Name");
+                String nomeStato = rs.getString("CountryName");
+                String codiceStato = rs.getString("CountryCode");
+
+                addRowTable(new String[]{id, nomeArea, nomeStato, codiceStato});
+                count++;
+            }
+
+            if (count == 0) {
+                JOptionPane.showMessageDialog(null, "Non è stato trovato alcun risultato!", "Errore di ricerca", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage(), "Database Error!", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, e.getMessage(), "Database Error!", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
     
@@ -1059,96 +1045,65 @@ public class Home extends JFrame {
      * Gestita eccezione: IOException eccezione per mancanza file, directory errata
      */
     public static void cercaAreaGeografica(double lat, double lon, int offset){
-        /**
-         * Imposto la linea e il lettore su valore 'nullo' iniziale
-         */
-        String line = null;
-        /**
-         * Dichirazione offset modificato su valore base
-         */
-        double offset_mod = 0;
-        FileReader in = null;
-        /**
-         * Creazione Array delle Aree geografiche come appoggio per la visualizzazione
-         */
-        ArrayList<String> Aree = new ArrayList<String>();
-        /**
-         * Dichiarazione variabili su valore base
-         */
-        int count = 0;
-        /**
-         * Assegnamento offset modificato partendo da offset impostato da utente
-         */
-        offset_mod = offset*0.01;
-        boolean ck = false;
+         Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
         try {
-            /**
-             * Imposto il lettore di riga con l'apposito separatore (dichiarato inizialmente)
-             * Leggo dal file 'CoordinateMonitoraggio.dati'
-             */
-            in = new FileReader("data"+sep+"CoordinateMonitoraggio.dati");
-            /**
-             * Buffer per la lettura
-             */
-            BufferedReader br = new BufferedReader(in);
-            /**
-             * Scanner usato in fase di debug (inserimento da riga di comando), poi disattivato
-             */
-            //Scanner sc = new Scanner(System.in);
-            /**
-             * Dichiarazione separatore di ricerca, coincide con il separatore usato nel file 'CoordinateMonitoraggio.dati'
-             */
-            String splitBy = ";";
-            /**
-             * Ciclo di lettetura del file per ricerca corrispondenza area geografica, conclusione a riga 'nulla'
-             */
-            while ((line = br.readLine()) !=null) {    
-                String[] Area = line.split(splitBy);
-                String[] coordinates = Area[5].split(", ");
-                
-                if(ck){
-                  /**
-                   * Semplificazione della stampa nel caso offset = 0
-                   */  
-                  if(Double.parseDouble(coordinates[0])==lat && Double.parseDouble(coordinates[1])==lon && offset==0){  
-                      /**
-                       * Creazione tabella con 'Area Geografiche' estratti dal file 'CoordinateMonitoraggio.dati'
-                       * Utilizzo metodo 'addRowTable' per creare le righe
-                       */
-                      addRowTable(new String[]{Area[0], Area[2], Area[4],Area[3]});
-                  }else
-                  if((((Double.parseDouble(coordinates[0])-offset_mod)<lat && (Double.parseDouble(coordinates[0])+offset_mod)>lat) && ((Double.parseDouble(coordinates[1])-offset_mod)<lon && (Double.parseDouble(coordinates[1])+offset_mod)>lon))) { //possibile sostituire il 2 con variabile 'offset' impostata da utente
-                      /**
-                       * Stampa risultati ricerca su riga di comando, per debug, rimossoù
-                       */
-                      //System.out.print("Corrispondenza: ");
-                      //System.out.println(Area[2]);
-                      /**
-                       * Creazione tabella con 'Area Geografiche' estratti dal file 'CoordinateMonitoraggio.dati'
-                       * Utilizzo metodo 'addRowTable' per creare le righe
-                       */
-                      addRowTable(new String[]{Area[0], Area[2], Area[4],Area[3]});
-                      count++; 
-                  }
-               }
-                ck=true;
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+            // Calcola l'offset modificato
+            double offset_mod = offset * 0.01;
+
+            // Query SQL per estrarre latitudine e longitudine dalla colonna "coordinates"
+            String sql = "SELECT GeoNameID, Name, CountryName, CountryCode, " +
+                         "CAST(SPLIT_PART(Coordinates, ', ', 1) AS DOUBLE PRECISION) AS Latitudine, " +
+                         "CAST(SPLIT_PART(Coordinates, ', ', 2) AS DOUBLE PRECISION) AS Longitudine " +
+                         "FROM CoordinateMonitoraggio " +
+                         "WHERE (CAST(SPLIT_PART(Coordinates, ', ', 1) AS DOUBLE PRECISION) BETWEEN ? AND ?) " +
+                         "AND (CAST(SPLIT_PART(Coordinates, ', ', 2) AS DOUBLE PRECISION) BETWEEN ? AND ?)";
+            
+            pstmt = conn.prepareStatement(sql);
+
+            // Imposta i parametri della query
+            pstmt.setDouble(1, lat - offset_mod);
+            pstmt.setDouble(2, lat + offset_mod);
+            pstmt.setDouble(3, lon - offset_mod);
+            pstmt.setDouble(4, lon + offset_mod);
+
+            rs = pstmt.executeQuery();
+
+            int count = 0;
+            ArrayList<String[]> risultati = new ArrayList<>();
+
+            while (rs.next()) {
+                String id = rs.getString("GeoNameID");
+                String nomeArea = rs.getString("Name");
+                String nomeStato = rs.getString("CountryName");
+                String codiceStato = rs.getString("CountryCode");
+
+                risultati.add(new String[]{id, nomeArea, nomeStato, codiceStato});
+                count++;
             }
-        }catch (IOException e) {
-                /**
-                 * Stampa errore su linea di comando, usata in fase di debug poi rimossa
-                 */
-                //System.out.print(e);
-                /**
-                 * Cattura errore in caso di mancato funzionamento del metodo 'CercaAreaGeografica'
-                 * Creazione pagina di dialogo dell'errore con l'errore (File error)
-                 */
-                JOptionPane.showMessageDialog(null, e,"File Error!", JOptionPane.ERROR_MESSAGE);
-        }
-        if(count==0){
-            /**
-             * Generazione finestra di errore con specifica dell'errore (Aree nelle vicinanze non trovate)
-             */
-            JOptionPane.showMessageDialog(null, "Non sono state trovate aree nelle vicinanze","Errore di ricerca", JOptionPane.ERROR_MESSAGE);
+
+            for (String[] risultato : risultati) {
+                addRowTable(risultato);
+            }
+
+            if (count == 0) {
+                JOptionPane.showMessageDialog(null, "Non sono state trovate aree nelle vicinanze", "Errore di ricerca", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage(), "Database Error!", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, e.getMessage(), "Database Error!", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
     

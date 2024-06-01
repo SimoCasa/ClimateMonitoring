@@ -327,6 +327,8 @@ public class AreaParametri extends javax.swing.JDialog {
                  * Generazione finestra di errore con specifica dell'errore (Parametri climatici assenti)
                  */
                 JOptionPane.showMessageDialog(null, "Non sono disponibili parametri climatici per la seguente città!","Avvertenza!!", JOptionPane.WARNING_MESSAGE);
+                ck=false;
+                dispose();
             }
         } catch (SQLException e) {
             /**

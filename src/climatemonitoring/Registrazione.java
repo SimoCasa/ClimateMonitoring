@@ -10,6 +10,9 @@ package climatemonitoring;
  * Importazione del separatore dalla classe main 'ClimateMonitor'
  */
 import static climatemonitoring.ClimateMonitor.sep;
+import static climatemonitoring.Home.DB_PASS;
+import static climatemonitoring.Home.DB_URL;
+import static climatemonitoring.Home.DB_USER;
 /**
  * Richiamo Librerie di Java
  */
@@ -39,12 +42,6 @@ import java.time.LocalDate;
  * @author 755531 Bonacina Davide
  */
 public class Registrazione extends JDialog {
-    /**
-     * Dichirazione dettagli per la connessione al Database
-     */
-    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
-    private static final String DB_USER = "postgres";
-    private static final String DB_PASS = "password";
     /**
      * Costruttore <strong>base</strong> (senza parametri)
      */
@@ -367,7 +364,7 @@ public class Registrazione extends JDialog {
                 }
             } catch (SQLException ex) {
                 Logger.getLogger(Registrazione.class.getName()).log(Level.SEVERE, null, ex);
-                JOptionPane.showMessageDialog(this, "Errore durante la registrazione: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Errore durante la registrazione: \n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

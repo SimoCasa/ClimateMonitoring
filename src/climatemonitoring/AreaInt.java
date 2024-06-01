@@ -6,6 +6,9 @@ package climatemonitoring;
  * Importazione del separatore dalla classe main 'ClimateMonitor'
  */
 import static climatemonitoring.ClimateMonitor.sep;
+import static climatemonitoring.Home.DB_PASS;
+import static climatemonitoring.Home.DB_URL;
+import static climatemonitoring.Home.DB_USER;
 import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -33,12 +36,6 @@ public class AreaInt extends javax.swing.JDialog {
       * Creo una finistra speculare alla Home, in versione 'Operatore' con privilegi e funzioni aggiuntive.
       */
     static Home hh;
-    /**
-     * Dichirazione dettagli per la connessione al Database
-     */
-    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
-    private static final String DB_USER = "postgres";
-    private static final String DB_PASS = "password";
     /**
      * Costruttore <strong>parametrizzato</strong> per bloccare la finestra sottostante
      * @param hh oggetto, di tipo 'Home'
