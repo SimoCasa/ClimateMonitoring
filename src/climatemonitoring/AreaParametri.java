@@ -17,9 +17,17 @@ import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Scanner;
 import javax.swing.JOptionPane;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 
 /**
  * @author 753546 Badrous Giorgio William
@@ -28,6 +36,13 @@ import javax.swing.table.DefaultTableModel;
  * @author 755531 Bonacina Davide
  */
 public class AreaParametri extends javax.swing.JDialog {
+    /**
+      * Creo oggetto di nome 'hh' di tipo 'Home' 
+      * Creo una finistra speculare alla Home, in versione 'Operatore' con privilegi e funzioni aggiuntive.
+      */
+    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASSWORD = "password";
     /**
      * Variabile oggetto di tipo 'Home'
      */
@@ -143,6 +158,22 @@ public class AreaParametri extends javax.swing.JDialog {
                 return canEdit [columnIndex];
             }
         });
+        TableColumnModel columnModel = paramTable.getColumnModel();
+
+        // Rendere le colonne non ridimensionabili
+        for (int i = 0; i < columnModel.getColumnCount(); i++) {
+            columnModel.getColumn(i).setResizable(false);
+        }
+
+        // Centrare orizzontalmente il testo nelle celle
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+
+        for (int i = 0; i < paramTable.getColumnCount(); i++) {
+            paramTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+        // Bloccare lo spostamento delle colonne
+        paramTable.getTableHeader().setReorderingAllowed(false);
         paramTable.setEnabled(false);
         jScrollPane1.setViewportView(paramTable);
 
@@ -183,7 +214,7 @@ public class AreaParametri extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 765, Short.MAX_VALUE)
                     .addComponent(jScrollPane2))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -250,65 +281,70 @@ public class AreaParametri extends javax.swing.JDialog {
      * Gestita eccezione: IOException eccezione per mancanza file, directory errata
     */
     public void visualizzaParametriClimatici(){
-        /**
-         * Imposto la linea e il lettore su valore 'nullo' iniziale
+        /*
+         * Imposto la connessione e la query su valore 'nullo' iniziale
          */
-        String line = null;
-        FileReader in = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
         try {
             /**
-             * Imposto il lettore di riga con l'apposito separatore (dichiarato inizialmente)
-             * Leggo dal file 'ParametriClimatici.dati'
+             * Connessione al database
+             * Sostituire 'db_url', 'db_user', 'db_password' con le credenziali del proprio database
              */
-            in = new FileReader("data"+sep+"ParametriClimatici.dati");
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+
             /**
-             * Buffer per la lettura
+             * Query per recuperare i parametri climatici in base al GeoNameID
              */
-            BufferedReader br = new BufferedReader(in);
+            String query = "SELECT vento, umidita, pressione, temperatura, precipitazione, altitudineghiacciai, massaghiacciai, note FROM ParametriClimatici WHERE GeoNameID = ?";
+            pstmt = conn.prepareStatement(query);
+            pstmt.setLong(1, geo);
+
             /**
-             * Scanner usato in fase di debug (inserimento da riga di comando)
+             * Esecuzione della query
              */
-            Scanner sc = new Scanner(System.in);
+            rs = pstmt.executeQuery();
+
             /**
-             * Dichiarazione separatore da usare in fase di login, coincide con il separatore usato nel file 'ParametriClimatici.dati'
+             * Se la query restituisce risultati, popola la tabella
              */
-            String splitBy = ";";
-            /**
-             * Variabile per eseguire il salto nel caso sia vuoto
-             */
-            boolean skip=false;
-            ck=false;
-            /**
-             * Ciclo di lettetura del file per ricerca corrispondenza GeoID per trovare parametri climatici, conclusione a riga 'nulla'
-             */
-            while ((line = br.readLine()) !=null){
-                if(skip){
-                    String[] param = line.split(splitBy);
-                    /**
-                     * Verifica corrispondenza GeoID inserito con dati estratti dal file 'ParametriClimatici.dati'
-                     */
-                    if(geo==Long.parseLong(param[0])){
-                        /**
-                         * Creazione tabella con 'Parametri Climatici' estratti dal file 'ParametriClimatici.dati'
-                         * Utilizzo metodo 'addRowTable' per creare le righe
-                         */
-                        addRowTable(new String[]{param[2],param[3],param[4],param[5],param[6],param[7],param[8]});
-                        noteArea.setText(noteArea.getText() +"\n-" +param[9]); ck=true;
-                    }
-                }skip=true;
-            }
-            if(ck==false){
+            if (rs.next()) {
+                addRowTable(new String[]{
+                    rs.getString("vento"),
+                    rs.getString("umidita"),
+                    rs.getString("pressione"),
+                    rs.getString("temperatura"),
+                    rs.getString("precipitazione"),
+                    rs.getString("altitudineghiacciai"),
+                    rs.getString("massaghiacciai")
+                });
+                noteArea.setText(noteArea.getText() + "\n-" + rs.getString("note"));
+                ck = true;
+            } else {
                 /**
                  * Generazione finestra di errore con specifica dell'errore (Parametri climatici assenti)
                  */
                 JOptionPane.showMessageDialog(null, "Non sono disponibili parametri climatici per la seguente città!","Avvertenza!!", JOptionPane.WARNING_MESSAGE);
             }
-        }catch (IOException e) {
+        } catch (SQLException e) {
             /**
              * Cattura errore in caso di mancato funzionamento del metodo 'visualizzaParametriClimatici'
              * Scrittura su riga di comando dell'errore per debug
              */
             System.out.print(e);
+        } finally {
+            /**
+             * Chiusura delle risorse
+             */
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                System.out.print(e);
+            }
         }
     }
     /**

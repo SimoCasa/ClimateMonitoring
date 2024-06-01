@@ -199,7 +199,7 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="centriDropActionPerformed"/>
       </Events>
       <AuxValues>
-        <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="//ArrayList model&lt;String&gt;=new ArrayList&lt;String&gt;();&#xa;boolean ck=false;&#xa;&#xa;String line = null;&#xa;FileReader in = null;&#xa;try {&#xa;    in = new FileReader(&quot;data&quot;+sep+&quot;CentroMonitoraggio.dati&quot;);&#xa;    BufferedReader br = new BufferedReader(in);&#xa;    String splitBy = &quot;;&quot;;&#xa;        while ((line = br.readLine()) !=null) {&#xa;            if(ck){&#xa;                int count = 0;&#xa;                String[] centro = line.split(splitBy);&#xa;                String nomeCentro = centro[0];&#xa;                //String idCentro = centro[4];&#xa;                centriDrop.addItem(centro[0]);&#xa;                //System.out.println(centro[0]);&#xa;            }ck=true;   &#xa;        }&#xa;    }catch (IOException e) {&#xa;        System.out.print(e);&#xa;}"/>
+        <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="//ArrayList model&lt;String&gt;=new ArrayList&lt;String&gt;();&#xa;centriDropSelector();"/>
         <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="//centriDrop.setSelectedIndex(null);"/>
         <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="centriDrop.addItem(&quot;&quot;);"/>
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>

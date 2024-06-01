@@ -23,6 +23,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import javax.swing.JOptionPane;
+import java.sql.ResultSet;
+import java.time.LocalDate;
+
 
 /**
  * @author 753546 Badrous Giorgio William
@@ -31,6 +39,12 @@ import javax.swing.JOptionPane;
  * @author 755531 Bonacina Davide
  */
 public class Registrazione extends JDialog {
+    /**
+     * Dichirazione dettagli per la connessione al Database
+     */
+    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASS = "password";
     /**
      * Costruttore <strong>base</strong> (senza parametri)
      */
@@ -212,27 +226,7 @@ public class Registrazione extends JDialog {
         );
 
         //ArrayList model<String>=new ArrayList<String>();
-        boolean ck=false;
-
-        String line = null;
-        FileReader in = null;
-        try {
-            in = new FileReader("data"+sep+"CentroMonitoraggio.dati");
-            BufferedReader br = new BufferedReader(in);
-            String splitBy = ";";
-            while ((line = br.readLine()) !=null) {
-                if(ck){
-                    int count = 0;
-                    String[] centro = line.split(splitBy);
-                    String nomeCentro = centro[0];
-                    //String idCentro = centro[4];
-                    centriDrop.addItem(centro[0]);
-                    //System.out.println(centro[0]);
-                }ck=true;
-            }
-        }catch (IOException e) {
-            System.out.print(e);
-        }
+        centriDropSelector();
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -243,73 +237,15 @@ public class Registrazione extends JDialog {
      * @throws IOException eccezzione per mancanza file, directory errata
      */
     private void RegistratiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegistratiActionPerformed
-        /**
-         * Variabili impostate su valore iniziale
-         */
-        boolean check=true; ArrayList<String> errore=new ArrayList<String>();int c=0;
-        /**
-         * Controlla se nome uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(nome.getText().equals("")){check=false;errore.add("Nome");c++;}
-        /**
-         * Controlla se cognome uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(cognome.getText().equals("")){check=false;errore.add("Cognome");c++;}
-        /**
-         * Controlla se email uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(email.getText().equals("")){check=false;errore.add("Email");c++;}
-        /**
-         * Controlla se username uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(username.getText().equals("")){check=false;errore.add("Username");c++;}
-        /**
-         * Controlla se codiceFisc uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(codFisc.getText().equals("")){check=false;errore.add("Codice Fiscale");c++;}
-        /**
-         * Controlla se password uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(password.getText().equals("")){check=false;errore.add("Password");c++;}
-        /**
-         * Controlla se centriDrop uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(centriDrop.getSelectedItem().equals("")){check=false;errore.add("Centro Monitoraggio");c++;}
-        /**
-         * Controlla se check diverso da vero, se uguale a vero prosegue 
-         * mostrando l'errore se falso invece prosegue con la registrazione
-         */
-        if(!check){
-            /**
-             * Variabili stringa f, vuota
-             */
-            String f = "";
-            for(String s : errore){ f+="\n-"+s ;}
-            /**
-             * Generazione finestra di errore con specifica dell'errore (parametro mancante)
-             */
-            JOptionPane.showMessageDialog(null, "Non hai inserito: " +f,"Errore!", JOptionPane.ERROR_MESSAGE);
-        }else{
-            /**
-             * Esegue il metodo di registrazione, controllato per evitare innalzamento di eccezioni
-             */
-            try {
-                /**
-                 * Richiamo funzione registrazione
-                 */
-                registrazione();
-                /**
-                 * Chiusura finestra corrente a inserimento eseguito
-                 */
-                this.dispose();
-            } catch (IOException ex) {
-                /**
-                 * Cattura errore in caso di mancato funzionamento del metodo 'registrazione'
-                 */
-                Logger.getLogger(Registrazione.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        try {
+            reg();
+            this.dispose();
+        } catch (IOException ex) {
+            Logger.getLogger(Registrazione.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_RegistratiActionPerformed
+    
+
     /**
      * Metodo non utilizzato
      */
@@ -366,105 +302,118 @@ public class Registrazione extends JDialog {
      * Senza parametri perché recuperati dalle TextField
      * @throws IOException eccezione per mancanza file, directory errata
     */
-    public void registrazione() throws IOException{
-        /**
-         * Variabili separatore di tipo String 
-         */
-        String sip="; ",sip2=";";
-        /**
-         * Imposto lo scrittore di riga con l'apposito separatore (dichiarato inizialmente)
-         * Scrivo sul file 'OperatororiRegistrati.dati'
-         */
-        FileWriter fw = new FileWriter("data"+sep+"OperatoriRegistrati.dati",true);
-        /**
-         * Scrivo ad uno ad uno i parametri inseriti nel form dall'utente, nel file 'OperatoriRegistrati.dati'
-         */
-        fw.write("\n");
-        fw.append(nome.getText()+sip);
-        fw.append(cognome.getText()+sip);
-        fw.append(codFisc.getText()+sip);
-        fw.append(email.getText()+sip);
-        fw.append(username.getText()+sip);
-        fw.append(password.getText()+sip2);
-        /**
-         * Inserimento usato in fase di debug, poi rimoss
-         */
-        //fw.append((String)centriDrop.getSelectedItem());
-        /**
-         * Reset parametri
-         */
-        String nome = (String)centriDrop.getSelectedItem();
-        String line = null;
-        FileReader in = null;
-        String IDCentro = null;
-        /**
-         * Stampa su riga di comando usato in fase di debug, poi rimosso
-         */
-        //System.out.println("Siamo Arrivati -1");
-        /**
-         * Lettura da file 'CentroMonitoraggio.dati' per cercare corrispodenza con i Centri disponibili
-         * per permettergli di scegliere poi da menu di selezione il Centro di competenza
-         */
-        try {
-            /*Stampa su riga di comando usato in fase di debug, poi rimosso*/
-            //System.out.println("Siamo Arrivati 0");
-            /**
-             * Imposto il lettore di riga con l'apposito separatore (dichiarato inizialmente)
-             * Leggo dal file 'CentroMonitoraggio.dati'
-             */
-            in = new FileReader("data"+sep+"CentroMonitoraggio.dati");
-            /**
-             * Buffer per la lettura
-             */
-            BufferedReader br = new BufferedReader(in);
-            /**
-             * Dichiarazione separatore da usare in fase di login, coincide con il separatore usato nel file 'CentroMonitoraggio.dati'
-             */
-            String splitBy = ";";
-            /**
-             * Ciclo di lettetura del file per estrarre 'Centri di Monitoraggio'
-             */
-            while ((line = br.readLine()) !=null) {
-                /**
-                 * Estrazione valore 'FileNome' dal file 'CentroMonitoraggio.dati'
-                 */
-                String[] centri = line.split(splitBy);
-                String FileNome = centri[0];
-                /**
-                 * Stampa su riga di comando usato in fase di debug, poi rimosso
-                 */
-                //System.out.println("Siamo Arrivati 1: "+nome+" "+FileNome);
-                /**
-                 * Verifica corrispodenza tra selezione e valore estratto da file
-                 */
-                if(nome.equals(FileNome)){
-                    /**
-                     * Stampa su riga di comando usato in fase di debug, poi rimosso
-                     */
-                    //System.out.println("Siamo Arrivati 2 "+centri[3]);
-                     /**
-                      * Assegnazione IDCentro da valore di file
-                      */
-                    IDCentro = centri[3];
-                    
-                    break;
-                }
-            }            
-        }catch(Exception e){
-             /**
-              * Stampa dell'eccezione generica
-              */
-            System.out.println(e);
-        }
-        fw.append((String)IDCentro);
+    public void reg() throws IOException{
+        boolean check = true;
+        ArrayList<String> errore = new ArrayList<>();
+        int c = 0;
         
-        /**
-         * Reset parametri/finestra
-         */
-        fw.flush();
-        fw.close();
-    }
+        if (nome.getText().equals("")) { check = false; errore.add("Nome"); c++; }
+        if (cognome.getText().equals("")) { check = false; errore.add("Cognome"); c++; }
+        if (email.getText().equals("")) { check = false; errore.add("Email"); c++; }
+        if (username.getText().equals("")) { check = false; errore.add("Username"); c++; }
+        if (codFisc.getText().equals("")) { check = false; errore.add("Codice Fiscale"); c++; }
+        if (password.getText().equals("")) { check = false; errore.add("Password"); c++; }
+        if (centriDrop.getSelectedItem().equals("")) { check = false; errore.add("Centro Monitoraggio"); c++; }
+        
+        if (!check) {
+            String f = "";
+            for (int i = 0; i < c; i++) {
+                f += errore.get(i) + "\n";
+            }
+            JOptionPane.showMessageDialog(null, "Dati Mancanti : \n" + f, "Error", JOptionPane.ERROR_MESSAGE);
+        } else {
+            String dbURL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
+            String user = "postgres";
+            String pass = "password";
+            
+            try (Connection conn = DriverManager.getConnection(dbURL, user, pass)) {
+                String centroNome = centriDrop.getSelectedItem().toString();
+                String getCentroIdSql = "SELECT idcentro FROM centromonitoraggio WHERE nome = ?";
+                PreparedStatement getCentroIdStmt = conn.prepareStatement(getCentroIdSql);
+                getCentroIdStmt.setString(1, centroNome);
+                ResultSet rs = getCentroIdStmt.executeQuery();
 
+                if (rs.next()) {
+                    int centroId = rs.getInt("idcentro");
+
+                    String sql = "INSERT INTO operatori (nome, cognome, codfisc, email, userid, password, id_centro) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    PreparedStatement statement = conn.prepareStatement(sql);
+                    statement.setString(1, nome.getText());
+                    statement.setString(2, cognome.getText());
+                    statement.setString(3, codFisc.getText());
+                    statement.setString(4, email.getText());
+                    statement.setString(5, username.getText());
+                    statement.setString(6, new String(password.getPassword())); // Converting char[] to String
+                    statement.setInt(7, centroId);
+
+                    int rowsInserted = statement.executeUpdate();
+                    if (rowsInserted > 0) {
+                        // Inserimento nella tabella rapporti
+                        String insertRapportiSql = "INSERT INTO rapporti (idcentro, codfisc, email, data) VALUES (?, ?, ?, ?)";
+                        PreparedStatement insertRapportiStmt = conn.prepareStatement(insertRapportiSql);
+                        insertRapportiStmt.setInt(1, centroId);
+                        insertRapportiStmt.setString(2, codFisc.getText());
+                        insertRapportiStmt.setString(3, email.getText());
+                        insertRapportiStmt.setDate(4, java.sql.Date.valueOf(LocalDate.now())); // Inserisce la data odierna
+
+                        int rapportiRowsInserted = insertRapportiStmt.executeUpdate();
+                        if (rapportiRowsInserted > 0) {
+                            JOptionPane.showMessageDialog(this, "Registrazione avvenuta con successo!");
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Errore durante l'inserimento nei rapporti.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Errore durante la registrazione.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "Centro di monitoraggio non trovato!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(Registrazione.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(this, "Errore durante la registrazione: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    /**
+     * Metodo per creare la lista dei centri di monitoraggio
+     * nella JComboBox dal DB
+    */
+    private void centriDropSelector() {
+        boolean ck = false;
+
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            // Connessione al database
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+            // Query per selezionare i nomi dei centri
+            String query = "SELECT nome FROM centromonitoraggio";
+            stmt = conn.prepareStatement(query);
+
+            // Esegui la query
+            rs = stmt.executeQuery();
+
+            // Processa i risultati
+            while (rs.next()) {
+                String nomeCentro = rs.getString("nome");
+                centriDrop.addItem(nomeCentro);
+                ck = true;
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                System.out.println(ex);
+            }
+        }
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Registrati;
     private javax.swing.JComboBox<String> centriDrop;
@@ -483,4 +432,5 @@ public class Registrazione extends JDialog {
     private javax.swing.JPasswordField password;
     private javax.swing.JTextField username;
     // End of variables declaration//GEN-END:variables
+
 }

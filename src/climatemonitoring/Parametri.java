@@ -18,7 +18,13 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 
@@ -30,6 +36,12 @@ import javax.swing.JOptionPane;
  */
 
 public class Parametri extends JDialog {
+    /**
+     * Dichirazione dettagli per la connessione al Database
+     */
+    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASS = "password";
     /**
      * Dichirazione variabili per controllo di eventuali errori di conversione
      */
@@ -139,80 +151,12 @@ public class Parametri extends JDialog {
         jLabel5.setText("Umidità");
 
         centriDrop.addItem("");
-        boolean ck = false;
-        boolean ck2 = false;
-        String line = null;
-        String IDArea = null;
-        String line2 = null;
-        FileReader in = null;
-        FileReader in2 = null;
-        try {
-            in = new FileReader("data"+sep+"OperatoriRegistrati.dati");
-            BufferedReader br = new BufferedReader(in);
-            in2 = new FileReader("data"+sep+"CentroMonitoraggio.dati");
-            BufferedReader br2 = new BufferedReader(in2);
-            String splitBy = "; ";
-            String split = ", ";
-            while ((line = br.readLine()) !=null) {
-                if(ck){
-                    String[] operatore = line.split(splitBy);
-                    if(operatore[2].equals(reg.codFisc)){
-                        //da qui recupero nome aree per aggiungerle
-                        String[] IdArea = operatore[6].split(split);
-                        while ((line2 = br2.readLine()) !=null) {
-                            if(ck){
-                                String[] area = line2.split(splitBy);
-                                IDArea = area[3];
-                                if(IdArea.length==1){
-                                    if(IDArea.equals(IdArea[0])){
-                                        centriDrop.addItem(area[0]);
-                                    }
-                                }else{
-                                    for(int i=0; i<IdArea.length;i++){
-                                        if(IDArea.equals(IdArea[i])){
-                                            centriDrop.addItem(area[0]);
-                                        }
-                                    }
-                                }
-                            }ck=true;
-                        }
-                    }
-
-                }ck=true;
-            }
-        }catch (IOException e) {
-            System.out.print(e);
-        }
+        centroANDareaDropInitialize();
         centriDrop.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 centriDropItemStateChanged(evt);
             }
         });
-
-        areaDrop.setEnabled(false);
-        String NomeCentro = (String)centriDrop.getSelectedItem();
-        ck=false;
-        line = null;
-        in = null;
-        String split = ", ";
-        try {
-            in = new FileReader("data"+sep+"CentroMonitoraggio.dati");
-            BufferedReader br = new BufferedReader(in);
-            String splitBy = "; ";
-            while ((line = br.readLine()) !=null) {
-                if(ck){
-                    String[] centro = line.split(splitBy);
-                    String nomeCentro = centro[0];
-                    //System.out.println("Nome: "+nomeCentro);
-                    if(NomeCentro.equals(nomeCentro)){
-                        String aree[] = centro[2].split(split);
-                        for(String s : aree){
-                            areaDrop.addItem(s);
-                        }
-                    }
-                }ck=true;
-            }
-        }catch(Exception e){}
 
         jLabel9.setText("Pressione");
 
@@ -789,67 +733,34 @@ public class Parametri extends JDialog {
      * @throws Exception eccezione generica
     */
     private void centriDropItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_centriDropItemStateChanged
-        /**
-         * Verifica elementi DropDown = ' ' (vuoto)
-         */
-        if(!centriDrop.getSelectedItem().equals("")){
-            /**
-             * Rimozione elementi DropDown
-             */
+       if (!centriDrop.getSelectedItem().equals("")) {
             areaDrop.removeAllItems();
-            /**
-             * Attivazione DropDown
-             */
             areaDrop.setEnabled(true);
-            /**
-             * Inserimento valori estratti da DropDown
-             */
-            String NomeCentro = (String)centriDrop.getSelectedItem();
-            boolean ck = false;
-            /**
-             * Imposto la linea e il lettore su valore 'nullo' iniziale
-             */
-            String line = null;
-            FileReader in = null;
-            /**
-             * Dichiarazione separatore da usare in fase di login, coincide con il separatore usato nel file 'CentroMonitoraggio.dati'
-             */
-            String split = ", ";
-            try {
-                /**
-                 * Imposto il lettore di riga con l'apposito separatore (dichiarato inizialmente)
-                 * Leggo dal file 'CentroMonitoraggio.dati'
-                 */
-                in = new FileReader("data"+sep+"CentroMonitoraggio.dati");
-                /**
-                 * Buffer per la lettura
-                 */
-                BufferedReader br = new BufferedReader(in);
-                String splitBy = "; ";
-                    /**
-                     * Ciclo di lettetura del file per ricerca corrispondenza valore, conclusione a riga 'nulla'
-                     */
-                    while ((line = br.readLine()) !=null) {
-                        if(ck){
-                            String[] centro = line.split(splitBy);
-                            String nomeCentro = centro[0];
-                            //System.out.println("Nome: "+nomeCentro);
-                            /**
-                             * Verifica corrispondenza valore inserito con dati estratti dal file 'CentroMonitoraggio.dati'
-                             */
-                            if(NomeCentro.equals(nomeCentro)){
-                                String aree[] = centro[2].split(split);
-                                for(String s : aree){
-                                    /**
-                                     * Inserimento valore estratto dal file 'CentroMonitoraggio.dati' nella DropDown
-                                     */
-                                    areaDrop.addItem(s);
-                                }   
+
+            String NomeCentro = (String) centriDrop.getSelectedItem();
+
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+                // Query to get areas related to the selected center
+                String sql = "SELECT AreaInteresse FROM CentroMonitoraggio WHERE Nome = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, NomeCentro);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            String[] aree = rs.getString("AreaInteresse").split(", ");
+                            for (String s : aree) {
+                                areaDrop.addItem(s);
                             }
-                        }ck=true;
+                        }
                     }
-            }catch(Exception e){}       
-        }else{areaDrop.removeAllItems();areaDrop.setEnabled(false);}
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Errore durante il recupero delle aree: " + e.getMessage(), "Errore!", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            areaDrop.removeAllItems();
+            areaDrop.setEnabled(false);
+        }
     }//GEN-LAST:event_centriDropItemStateChanged
      
     
@@ -891,6 +802,100 @@ public class Parametri extends JDialog {
                 new Registrazione().setVisible(true);
             }
         });
+    }
+    
+    private void centroANDareaDropInitialize() {
+        boolean ck = false;
+        boolean ck2 = false;
+        String line = null;
+        String IDArea = null;
+        String line2 = null;
+        FileReader in = null;
+        FileReader in2 = null;
+        Connection conn = null;
+        PreparedStatement stmtOperatore = null;
+        PreparedStatement stmtCentro = null;
+        ResultSet rsOperatore = null;
+        ResultSet rsCentro = null;
+
+        try {
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+            // Query per ottenere le aree di interesse dell'operatore
+            String queryOperatore = "SELECT c.areainteresse FROM operatori o JOIN rapporti r ON o.codFisc = r.codFisc AND o.email=r.email JOIN centromonitoraggio c ON r.idCentro = c.idcentro WHERE o.codFisc = ?";
+            stmtOperatore = conn.prepareStatement(queryOperatore);
+            stmtOperatore.setString(1, reg.codFisc);
+            rsOperatore = stmtOperatore.executeQuery();
+
+            if (rsOperatore.next()) {
+                String[] IdArea = rsOperatore.getString("areaInteresse").split(", ");
+
+                // Query per ottenere i centri di monitoraggio
+                String queryCentro = "SELECT nome, areaInteresse FROM CentroMonitoraggio";
+                stmtCentro = conn.prepareStatement(queryCentro);
+                rsCentro = stmtCentro.executeQuery();
+
+                while (rsCentro.next()) {
+                    String nomeCentro = rsCentro.getString("nome");
+                    String[] areeCentro = rsCentro.getString("areaInteresse").split(", ");
+
+                    for (String area : IdArea) {
+                        if (Arrays.asList(areeCentro).contains(area)) {
+                            centriDrop.addItem(nomeCentro);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rsOperatore != null) rsOperatore.close();
+                if (stmtOperatore != null) stmtOperatore.close();
+                if (rsCentro != null) rsCentro.close();
+                if (stmtCentro != null) stmtCentro.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        // Imposta areaDrop come disabilitato inizialmente
+        areaDrop.setEnabled(false);
+        String NomeCentro = (String) centriDrop.getSelectedItem();
+
+        // Seleziona le aree di interesse per il centro selezionato
+        if (NomeCentro != null) {
+            try {
+                conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+                // Query per ottenere le aree di interesse del centro selezionato
+                String query = "SELECT areaInteresse FROM CentroMonitoraggio WHERE nome = ?";
+                PreparedStatement stmt = conn.prepareStatement(query);
+                stmt.setString(1, NomeCentro);
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    String[] areeInteresse = rs.getString("areaInteresse").split(", ");
+                    for (String area : areeInteresse) {
+                        areaDrop.addItem(area);
+                    }
+                    areaDrop.setEnabled(true);
+                }
+
+                rs.close();
+                stmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (conn != null) conn.close();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
