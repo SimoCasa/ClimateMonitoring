@@ -85,7 +85,6 @@ public class AreaInt extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         cittaField = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
@@ -97,13 +96,9 @@ public class AreaInt extends javax.swing.JDialog {
         latField = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
         lonField = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-
-        jLabel1.setFont(new java.awt.Font("Segoe UI Historic", 1, 12)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(255, 102, 0));
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Inserimento Area Interesse");
 
         jLabel2.setText("Città");
 
@@ -128,6 +123,10 @@ public class AreaInt extends javax.swing.JDialog {
         jLabel6.setText("Nome Stato");
 
         jLabel7.setText("Longitudine");
+
+        jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        jLabel5.setForeground(new java.awt.Color(255, 153, 102));
+        jLabel5.setText("Inserimento Area Interesse");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -158,16 +157,15 @@ public class AreaInt extends javax.swing.JDialog {
                 .addComponent(inserisci)
                 .addGap(66, 66, 66))
             .addGroup(layout.createSequentialGroup()
-                .addGap(151, 151, 151)
-                .addComponent(jLabel1)
+                .addGap(88, 88, 88)
+                .addComponent(jLabel5)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1)
-                .addGap(42, 42, 42)
+                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(cittaField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -354,10 +352,10 @@ public class AreaInt extends javax.swing.JDialog {
     private javax.swing.JTextField codeField;
     private javax.swing.JTextField countryField;
     private javax.swing.JButton inserisci;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JTextField latField;
