@@ -10,16 +10,23 @@ package climatemonitoring;
  * Importazione del separatore dalla classe main 'ClimateMonitor'
  */
 import static climatemonitoring.ClimateMonitor.sep;
+
 /**
  * Richiamo Librerie di Java
  */
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+
 
 /**
  * @author 753546 Badrous Giorgio William
@@ -32,8 +39,13 @@ public class Accesso extends javax.swing.JDialog {
       * Creo oggetto di nome 'hh' di tipo 'Home' 
       * Creo una finistra speculare alla Home, in versione 'Operatore' con privilegi e funzioni aggiuntive.
       */
-     Home hh;
-     
+    Home hh;
+    /**
+    * Dichirazione dettagli per la connessione al Database
+    */
+    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASS = "password";
      /**
       * Costruttore <strong>base</strong> (senza parametri)
       */
@@ -351,119 +363,56 @@ public class Accesso extends javax.swing.JDialog {
         /**
          * Imposto la linea e il lettore su valore 'nullo' iniziale
          */
-        String line = null;
-        FileReader in = null;
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
         try {
-            /**
-             * Imposto il lettore di riga con l'apposito separatore (dichiarato inizialmente)
-             * Leggo dal file 'OperatororiRegistrati.dati'
-             */
-            in = new FileReader("data"+sep+"OperatoriRegistrati.dati");
-            /**
-             * Buffer per la lettura
-             */
-            BufferedReader br = new BufferedReader(in);
-            /**
-             * Scanner usato in fase di debug (inserimento da riga di comando)
-             */
-            Scanner sc = new Scanner(System.in);
-            /**
-             * Dichiarazione separatore da usare in fase di login, coincide con il separatore usato nel file 'OperatoriRegistrati.dati'
-             * Nota: lo spazio: ' ' è fondamentale perchè presente nel file, ad ogni salvataggio di credenziali nuove (Registrazione/Inserimento da file diretto)
-             */
-            String splitBy = "; ";
-            /**
-             * Dichiarazione boolean 'aut' su valore 'falso'
-             */
-            boolean aut=false;
-            /**
-             * Metodo per recuperare credenziali da TextField usata nella parte grafica, e inserite dall'utente
-             */
-            String userid = usernameField.getText();
-            String password = passwordField.getText();
-            /**
-             * Ciclo di lettetura del file per ricerca corrispondenza credenziali, conclusione a riga 'nulla'
-             */
-            while ((line = br.readLine()) !=null) {
-                /**
-                 * Estrazione valori 'UserID' e 'Password' dal file 'OperatoriRegistrati.dati'
-                 */
-                String[] operatore = line.split(splitBy);
-                String FileUser = operatore[4];
-                String FilePass = operatore[5];
-                /**
-                 * Stampa su riga di comando usata in fase di debug (commentata ora)
-                 */
-                /*System.out.print("User da file: "+FileUser+" User da input: "+userid+" Password da file: "+FilePass+" Password da input: "+password);*/
-                /**
-                 * Verifica corrispondenza dati inseriti dall'utente con dati estratti dal file 'OperatoriRegistrati.dati'
-                 */
-                if (userid.equals(FileUser) && password.equals(FilePass)) {
-                    /**
-                     * Corrispondenza valida, login effettuato.
-                     * Stampa messaggio di validità,del login, su riga di comando (per debug)
-                     */
-                    System.out.println("Login effettuato: " +operatore[0] +" " +operatore[1]);
-                    /**
-                     * Boolean 'auth' su valore 'vero', login effettuato
-                     */
-                    auth=true;
-                    /**
-                     * Metodo per rendere visibile il bottone di logout (nella finestra speculare, da operatore con permessi)
-                     */
-                    hh.logout.setVisible(true);
-                    /**
-                     * Metodo per rendere non visibile il bottone di login (nella finestra speculare, da operatore con permessi)
-                     */
-                    hh.accedi.setVisible(false);
-                    /**
-                     * Metodo per rendere non visibile il bottone di registrazione (nella finestra speculare, da operatore con permessi)
-                     */
-                    hh.registrati.setVisible(false); 
-                    /**
-                     * Metodo per rendere visibile il bottone per aggiungere 'Centro di Monitoraggio' (nella finestra speculare, da operatore con permessi)
-                     */
-                    hh.addCentro.setVisible(true);
-                    /**
-                     * Metodo per rendere visibile il bottone per aggiungere 'Parametri Climatici' (nella finestra speculare, da operatore con permessi)
-                     */
-                    hh.addParam.setVisible(true);
-                    /**
-                     * Metodo per rendere visibile il bottone per aggiungere 'Aree di Interesse' (nella finestra speculare, da operatore con permessi)
-                     */
-                    hh.addArea.setVisible(true);
-                    /**
-                     * Passaggio di Nome,Cognome,Codice fiscale dell'operatore alla Finestra in una stringa per successivo riutilizzo
-                     */
-                    hh.nomeU=operatore[0];
-                    hh.cogU=operatore[1];
-                    hh.codFisc=operatore[2];
-                    /**
-                     * Creazione blocco di testo, con frase di 'Benvenuto' e informazioni dell'operatore (nome/cognome)
-                     */
-                    hh.newLabel.setText("Benvenuto " +operatore[0] +" " +operatore[1]);   
-                    /**
-                     * Boolean 'aut' su valore 'vero' per stabilire che l'utente è loggato (e saltare errore)
-                     */
-                    aut=true;
-                    /**
-                     * Chiusura finestra corrente a inserimento eseguito
-                     */
-                    this.dispose();
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+            String sql = "SELECT nome, cognome, codfisc FROM operatori WHERE userid = ? AND password = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, usernameField.getText());
+            stmt.setString(2, new String(passwordField.getPassword()));
+
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                // Login effettuato
+                String nome = rs.getString("nome");
+                String cognome = rs.getString("cognome");
+                String codfisc = rs.getString("codfisc");
+
+                hh.logout.setVisible(true);
+                hh.accedi.setVisible(false);
+                hh.registrati.setVisible(false);
+                hh.addCentro.setVisible(true);
+                hh.addParam.setVisible(true);
+                hh.addArea.setVisible(true);
+
+                hh.nomeU = nome;
+                hh.cogU = cognome;
+                hh.codFisc = codfisc;
+
+                hh.newLabel.setText("Benvenuto " + nome + " " + cognome);
+
+                this.dispose();
+                } else {
+                    // Credenziali errate
+                    JOptionPane.showMessageDialog(null, "Le credenziali sono errate!", "Errore!", JOptionPane.ERROR_MESSAGE);
                 }
-            }
-            if(!aut){
-                /**
-                 * Generazione finestra di errore in case di mancata login ('aut' su base 'falsa')
-                 */
-                JOptionPane.showMessageDialog(null, "Le credenziali sono errate!","Errore!", JOptionPane.ERROR_MESSAGE);
-            }
-        }   catch (IOException e) {
-                /**
-                 * Stampa dell'eccezione alzata (in caso di mancato funzionamento del metodo 'accedi') su riga di comando
-                 */
-                System.out.print(e);
-            }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Errore di connessione al database!", "Errore!", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    try {
+                        if (rs != null) rs.close();
+                        if (stmt != null) stmt.close();
+                        if (conn != null) conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
     }
 
 

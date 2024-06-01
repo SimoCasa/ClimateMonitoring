@@ -14,10 +14,11 @@ import static climatemonitoring.ClimateMonitor.sep;
  * Richiamo Librerie di Java
  */
 import java.awt.Dimension;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,6 +35,12 @@ public class CentroMonitoraggio extends javax.swing.JDialog {
      * Creo oggetto statico di nome 'hh' di tipo 'Home' 
      */
     static Home hh;
+    /**
+    * Dichirazione dettagli per la connessione al Database
+    */
+    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASS = "password";
     /**
      * Costruttore <strong>parametrizzato</strong> per bloccare la finestra sottostante e creare il form di inserimento
      * @param hh oggetto, di tipo 'Home'
@@ -290,71 +297,62 @@ public class CentroMonitoraggio extends javax.swing.JDialog {
      * @throws IOException eccezione per mancanza file, directory errata
      */
     public void registraCentroAree() throws IOException{
-        /**
-         * Variabile separatore di tipo String 
-         */
-        String sp="; ";
-        String s=";";
-        /**
-         * Imposto lo scrittore di riga con l'apposito separatore (dichiarato inizialmente)
-         * Scrivo sul file 'CentroMonitoraggio.dati' e 'OperatoriRegistrati' per associare l'user
-         */
-        FileWriter fw = new FileWriter("data"+sep+"CentroMonitoraggio.dati",true);
-        FileWriter fw2 = new FileWriter("data"+sep+"OperatoriRegistrati.dati",true);  
-        /**
-         * Inserisco ad uno ad uno i parametri forniti nel form dall'utente, nel file 'CentroMonitoraggio.dati'
-         */
-        fw.write("\n");
-        fw.append(nomeCentro.getText()+sp);
-        fw.append(indirizzo.getText()+sp);
-        fw.append(area.getText()+s);
-        /**
-         * Calcolo ID dell'area
-         */
-        int cont = 0;  
-        /**
-         * Imposto il lettore di riga con l'apposito separatore (dichiarato inizialmente)
-         * Leggo dal file 'CentroMonitoraggio.dati' e 'OperatoriRegistrati.dati'
-         */
-        FileReader reader = new FileReader("data"+sep+"CentroMonitoraggio.dati");
-        FileReader reader2 = new FileReader("data"+sep+"OperatoriRegistrati.dati");
-        /**
-         * Buffer per la lettura
-         */
-        BufferedReader in = new BufferedReader(reader);
-        BufferedReader in2 = new BufferedReader(reader2);
-        /**
-         * Conteggio delle righe presenti nel file per avere l'ID del centro di monitoraggio
-         */
-        while(in.readLine()!=null){cont++;}
-        /**
-         *NB: senza separatore in quanto ultimo dato presente nella riga
-         */
-        fw.append(" " +String.valueOf(cont));    
-        /**
-         * Dichiarazione separatore da usare in fase di login, 
-         * coincide con il separatore usato nel file 'OperatoriRegistrati.dati'
-         */
-        String splitBy = "; ", line=null;
-        /**
-         * Ciclo di lettetura del file per estrarre 'Operatori Registrati'
-         */
-        while((line=in2.readLine())!=null){
-            /**
-             * Estrazione valore 'codiceFisc' dal file 'OperatoriRegistrati.dati' e verifica di corrispodenza
-             */
-            String[] operatore = line.split(splitBy);
-            if(hh.codFisc.equals(operatore[2])){
-                fw2.append(", "+cont);
+        boolean check = true;
+        ArrayList<String> errore = new ArrayList<String>();
+        int c = 0;
+
+        if (nomeCentro.getText().equals("")) {
+            check = false;
+            errore.add("Nome Centro Monitoraggio");
+            c++;
+        }
+
+        if (indirizzo.getText().equals("")) {
+            check = false;
+            errore.add("Indirizzo fisico");
+            c++;
+        }
+
+        if (area.getText().equals("")) {
+            check = false;
+            errore.add("Elenco aree di interesse");
+            c++;
+        }
+
+        if (!check) {
+            String f = "";
+            for (String s : errore) {
+                f += "\n-" + s;
+            }
+            JOptionPane.showMessageDialog(null, "Non hai inserito: " + f, "Errore!", JOptionPane.ERROR_MESSAGE);
+        } else {
+            Connection conn = null;
+            PreparedStatement stmt = null;
+
+            try {
+                conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+
+                String query = "INSERT INTO centromonitoraggio (nome, indirizzo, areainteresse) VALUES (?, ?, ?)";
+                stmt = conn.prepareStatement(query);
+                stmt.setString(1, nomeCentro.getText());
+                stmt.setString(2, indirizzo.getText());
+                stmt.setString(3, area.getText());
+                stmt.executeUpdate();
+
+                JOptionPane.showMessageDialog(null, "Centro di monitoraggio inserito con successo!");
+
+                this.dispose();
+            } catch (SQLException ex) {
+                Logger.getLogger(CentroMonitoraggio.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                try {
+                    if (stmt != null) stmt.close();
+                    if (conn != null) conn.close();
+                } catch (SQLException ex) {
+                    Logger.getLogger(CentroMonitoraggio.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
-        /**
-         * Reset parametri/finestre/box
-         */
-        fw.flush();
-        fw.close();
-        fw2.flush();
-        fw2.close();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -16,6 +16,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import java.text.Normalizer;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 /**
  * @author 753546 Badrous Giorgio William
@@ -29,6 +33,12 @@ public class AreaInt extends javax.swing.JDialog {
       * Creo una finistra speculare alla Home, in versione 'Operatore' con privilegi e funzioni aggiuntive.
       */
     static Home hh;
+    /**
+     * Dichirazione dettagli per la connessione al Database
+     */
+    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASS = "password";
     /**
      * Costruttore <strong>parametrizzato</strong> per bloccare la finestra sottostante
      * @param hh oggetto, di tipo 'Home'
@@ -287,43 +297,42 @@ public class AreaInt extends javax.swing.JDialog {
      * @throws IOException eccezione per mancanza file, directory errata
      */
     public void inserisciAreaInt() throws IOException{
-        /**
-         * Variabile separatore di tipo String 
-         */
-        String sp=";";
-        /**
-         * Imposto lo scrittore di riga con l'apposito separatore (dichiarato inizialmente)
-         * Scrivo sul file 'CoordinateMonitoraggio.dati'
-         */
-        FileWriter fw = new FileWriter("data"+sep+"CoordinateMonitoraggio.dati",true);
-        fw.write("\n");
-        
-        //Imposta il GEONAMEID
-        /**
-         * Impostazione GeoNameID e inserimento ad uno ad uno i parametri forniti nel form dall'utente, nel file 'CentroMonitoraggio.dati'
-         */
-        FileReader reader = new FileReader("data"+sep+"CoordinateMonitoraggio.dati");
-        BufferedReader in = new BufferedReader(reader);
-        long finn = 12510668 + (long)(Math.random() * (12910668 - 12510668));
-        /**
-         * Generazione del GeoNameID univoco.
-         */
-        fw.write(Long.toString(finn)+sp);
-        fw.append(cittaField.getText()+sp);
-        /**
-         * Conversione nome inserito in nome di tipo 'ASCII' per inserimento in file.
-         */
-        fw.append(toAscii(cittaField.getText())+sp);
-        fw.append(codeField.getText()+sp);
-        fw.append(countryField.getText()+sp);
-        fw.append(latField.getText()+sp);
-        fw.append(lonField.getText());
-        /**
-         * Reset parametri/finestre/box
-         */
-        fw.flush();
-        fw.close();
+        // Dichiarare la query SQL per l'inserimento dei dati
+        String query = "INSERT INTO coordinatemonitoraggio (geonameid, name, asciiname, countrycode, countryname, coordinates) VALUES (?, ?, ?, ?, ?, ?)";
+        try (
+            // Creare una connessione al database
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+            // Preparare lo statement SQL per l'inserimento
+            PreparedStatement pstmt = conn.prepareStatement(query)
+        ) {
+            // Impostare i parametri della query con i valori dalle caselle di testo
+            long geonameid = generateUniqueGeonameId(); // Genera un geonameid univoco
+            pstmt.setLong(1, geonameid);
+            pstmt.setString(2, cittaField.getText());
+            pstmt.setString(3, toAscii(cittaField.getText()));
+            pstmt.setString(4, codeField.getText());
+            pstmt.setString(5, countryField.getText());
+            pstmt.setString(6, latField.getText() + ", " + lonField.getText());
+
+            // Eseguire la query di inserimento
+            pstmt.executeUpdate();
+
+            // Mostrare un messaggio di conferma
+            JOptionPane.showMessageDialog(null, "Dati inseriti con successo!");
+
+            // Chiudere la finestra di dialogo dopo l'inserimento
+            this.dispose();
+        } catch (SQLException ex) {
+            // Gestire eventuali errori durante l'inserimento nel database
+            Logger.getLogger(AreaInt.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(null, "Errore durante l'inserimento dei dati nel database.", "Errore", JOptionPane.ERROR_MESSAGE);
+        }
     }
+    
+    private long generateUniqueGeonameId() {
+        return 12510668 + (long)(Math.random() * (12910668 - 12510668));
+    }
+    
     /**
      * Metodo per la conversione del nome inserito in 'ASCII'
      * @param accented nome con accenti/caratteri speciali
