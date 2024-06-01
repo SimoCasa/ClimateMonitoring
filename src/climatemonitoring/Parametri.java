@@ -316,240 +316,102 @@ public class Parametri extends JDialog {
         /**
          * Variabili impostate su valore iniziale
          */
-        boolean check=true; ArrayList<String> errore=new ArrayList<String>();int c=0;
-        /**
-         * Controlla se centriDrop uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(centriDrop.getSelectedItem()==""){check=false;errore.add("Centro Monitoraggio");c++;}
-        /**
-         * Controlla se areaDrop uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(areaDrop.getSelectedItem()==""){check=false;errore.add("Area Interesse");c++;}
-        /**
-         * Controlla se ventoField uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(ventoField.getText().equals("")){check=false;errore.add("Vento");c++;}
-        /**
-         * Controlla se umiditaField uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(umiditaField.getText().equals("")){check=false;errore.add("Umidità");c++;}
-        /**
-         * Controlla se pressioneField uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(pressioneField.getText().equals("")){check=false;errore.add("Pressione");c++;}
-        /**
-         * Controlla se temperaturaField uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(temperaturaField.getText().equals("")){check=false;errore.add("Temperatura");c++;}
-        /**
-         * Controlla se precipitazioniField uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(precipitazioniField.getText().equals("")){check=false;errore.add("Precipitazioni");c++;}
-        /**
-         * Controlla se altField uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(altField.getText().equals("")){check=false;errore.add("Altitudine Ghiacciai");c++;}
-        /**
-         * Controlla se massField uguale a ' ' (vuoto), se vuoto check su valore 'falso'
-         */
-        if(massField.getText().equals("")){check=false;errore.add("Massa Ghiacciai");c++;}
-        /**
-         * Controlla se check diverso da vero, se uguale a vero prosegue 
-         * mostrando l'errore se falso invece prosegue con l'inserimento
-         */
-        if(!check){
-            /**
-             * Variabili stringa f, vuota
-             */
+        boolean check = true;
+        ArrayList<String> errore = new ArrayList<String>();
+        int c = 0;
+
+        if (centriDrop.getSelectedItem() == "") {
+            check = false; errore.add("Centro Monitoraggio"); c++;
+        }
+        if (areaDrop.getSelectedItem() == "") {
+            check = false; errore.add("Area Interesse"); c++;
+        }
+        if (ventoField.getText().equals("")) {
+            check = false; errore.add("Vento"); c++;
+        }
+        if (umiditaField.getText().equals("")) {
+            check = false; errore.add("Umidità"); c++;
+        }
+        if (pressioneField.getText().equals("")) {
+            check = false; errore.add("Pressione"); c++;
+        }
+        if (temperaturaField.getText().equals("")) {
+            check = false; errore.add("Temperatura"); c++;
+        }
+        if (precipitazioniField.getText().equals("")) {
+            check = false; errore.add("Precipitazioni"); c++;
+        }
+        if (altField.getText().equals("")) {
+            check = false; errore.add("Altitudine Ghiacciai"); c++;
+        }
+        if (massField.getText().equals("")) {
+            check = false; errore.add("Massa Ghiacciai"); c++;
+        }
+
+        if (!check) {
             String f = "";
-            for(String s : errore){ f+="\n-"+s ;}
-            /**
-             * Generazione finestra di errore con specifica dell'errore (parametro mancante)
-             */
-            JOptionPane.showMessageDialog(null, "Non hai inserito: " +f,"Errore!", JOptionPane.ERROR_MESSAGE);
-        }else{
-            /**
-             * Esegue il metodo d'inserimento, controllato per evitare innalzamento di eccezioni
-             * trasformazione dei parametri inseriti in punteggi
-             * recupero dell ID da variabile IDCentro
-             */
+            for (String s : errore) { f += "\n-" + s; }
+            JOptionPane.showMessageDialog(null, "Non hai inserito: " + f, "Errore!", JOptionPane.ERROR_MESSAGE);
+        } else {
             String NomeCentro = (String) centriDrop.getSelectedItem();
-            /**
-             * Imposto la linea e il lettore su valore 'nullo' iniziale
-             */
-            String line = null;
-            FileReader in = null;
-            /**
-             * Dichiarazione separatore da usare in fase di ricerca, coincide con il separatore usato nel file 'CentroMonitoraggio.dati'
-             */
-            String splitBy = "; ";
-            /**
-             * Dichiarazione IDCentro su valore base
-             */
-            int IDCentro=0;
-            try {
-                /**
-                 * Imposto il lettore di riga con l'apposito separatore (dichiarato inizialmente)
-                 * Leggo dal file 'CentriMonitoraggio.dati'
-                 */
-                in = new FileReader("data"+sep+"CentroMonitoraggio.dati");
-                /**
-                 * Buffer per la lettura
-                 */
-                BufferedReader br = new BufferedReader(in);
-                /**
-                 * Ciclo di lettetura del file per ricerca corrispondenza valore, conclusione a riga 'nulla'
-                 */
-                while ((line = br.readLine()) !=null) {
-                    String[] centro = line.split(splitBy);
-                    /**
-                     * Verifica corrispondenza ID del centro inserito con dati estratti dal file 'CentroMonitoraggio.dati'
-                     */
-                    if(centro[0].equals(NomeCentro)){
-                        /**
-                         * Assegnazione NomeCentro da valore di file
-                         */
-                        IDCentro = Integer.parseInt(centro[3]);
-                        break;
-                    }
-                }
-            }catch(Exception e){
-                /**
-                 * Scrittura su riga di comando del eccezione, per debug
-                 */
-                System.out.println(e);
-            }
-            
-            /**
-             * Metodo per il recupero del valore di ID presente in variabile GeoID
-             */
             String NomeArea = (String) areaDrop.getSelectedItem();
-            /**
-             * Imposto la linea e il lettore su valore 'nullo' iniziale
-             */
-            line = null;
-            in = null;
-            splitBy = ";";
-            long GeoID=0;
-            try {
-                /**
-                 * Imposto il lettore di riga con l'apposito separatore (dichiarato inizialmente)
-                 * Leggo dal file 'CoordinateMonitoraggio.dati'
-                */
-                in = new FileReader("data"+sep+"CoordinateMonitoraggio.dati");
-                /**
-                 * Buffer per la lettura
-                 */
-                BufferedReader br = new BufferedReader(in);
-                /**
-                 * Ciclo di lettetura del file per ricerca corrispondenza valore, conclusione a riga 'nulla'
-                 */
-                while ((line = br.readLine()) !=null) {
-                    String[] aree = line.split(splitBy);
-                    /**
-                     * Verifica corrispondenza nome del centro inserito con dati estratti dal file 'CoordinateMonitoraggio.dati'
-                     */
-                    if(aree[1].equals(NomeArea)){
-                        /**
-                         * Assegnazione GeoID da valore di file
-                         */
-                        GeoID = Long.parseLong(aree[0]);
+            long GeoID = 0;
+            int IDCentro = 0;
+
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+                // Retrieve IDCentro
+                String sqlCentro = "SELECT idcentro FROM CentroMonitoraggio WHERE nome = ?";
+                try (PreparedStatement psCentro = conn.prepareStatement(sqlCentro)) {
+                    psCentro.setString(1, NomeCentro);
+                    try (ResultSet rsCentro = psCentro.executeQuery()) {
+                        if (rsCentro.next()) {
+                            IDCentro = rsCentro.getInt("idcentro");
+                        }
                     }
                 }
-            }catch(Exception e){} 
-           
-            try{
-                /**
-                 * Estrazione valore vento da box d'inserimento
-                 */
-                int vento = Integer.parseInt(ventoField.getText());
-                /**
-                 * Estrazione valore umidita da box d'inserimento
-                 */
-                int umidita = Integer.parseInt(umiditaField.getText());
-                /**
-                 * Estrazione valore pressione da box d'inserimento
-                 */
-                int pressione = Integer.parseInt(pressioneField.getText());
-                /**
-                 * Estrazione valore temperatura da box d'inserimento
-                 */
-                int temperatura = Integer.parseInt(temperaturaField.getText());
-                /**
-                 * Estrazione valore precipitazioni da box d'inserimento
-                 */
-                int precipitazioni = Integer.parseInt(precipitazioniField.getText());
-                /**
-                 * Estrazione valore altitudine da box d'inserimento
-                 */
-                int alt = Integer.parseInt(altField.getText());
-                /**
-                 * Estrazione valore massa da box d'inserimento
-                 */
-                int mass = Integer.parseInt(massField.getText());
-                
-                /**
-                 * Richiamo delle funzioni per il calcolo dei punteggi
-                 */
-                int scoreVento = calcolaScoreVento(vento);
-                int scoreUmidita = calcolaScoreUmidita(umidita);
-                int scorePressione = calcolaScorePressione(pressione);
-                int scoreTemperatura = calcolaScoreTemperatura(temperatura);
-                int scorePrecipitazioni = calcolaScorePrecipitazioni(precipitazioni);
-                int scoreAlt = calcolaScoreAltitudineGhiacciai(alt);
-                int scoreMass = calcolaScoreMassaGhiacciai(mass);         
-                String note = noteArea.getText();
-                /**
-                 * Metodo scrittura dei punteggi calcolati su File
-                 * ck per prevenire la scrittura su file di dati errati
-                 */
-                if(ck){     
-                    try{
-                        /**
-                         * Dichiarazione separatore da usare in fase di inserimento
-                         */
-                        String sip="; ";
-                        /**
-                         * Imposto lo scrittore di riga con l'apposito separatore (dichiarato inizialmente)
-                         * Scrivo sul file 'ParametriClimatici.dati'
-                         */
-                        FileWriter fw = new FileWriter("data"+sep+"ParametriClimatici.dati",true);
-                        /**
-                         * Scrivo ad uno ad uno i parametri inseriti nel form dall'utente, nel file 'ParametriClimatici.dati'
-                         * i parametri che sono stati precedentemente trasformati in 'punteggio'
-                         */
-                        fw.write("\n");
-                        fw.append(GeoID+sip);
-                        fw.append(IDCentro+sip);
-                        fw.append(scoreVento+sip);
-                        fw.append(scoreUmidita+sip);
-                        fw.append(scorePressione+sip);
-                        fw.append(scoreTemperatura+sip);
-                        fw.append(scorePrecipitazioni+sip);
-                        fw.append(scoreAlt+sip);
-                        fw.append(scoreMass+sip);
-                        if(!noteArea.getText().equals("")){
-                            fw.append(note);
-                        }else{
-                            fw.append("Nessun commento disponibile!");
+
+                // Retrieve GeoID
+                String sqlGeo = "SELECT GeonameID FROM CoordinateMonitoraggio WHERE name = ?";
+                try (PreparedStatement psGeo = conn.prepareStatement(sqlGeo)) {
+                    psGeo.setString(1, NomeArea);
+                    try (ResultSet rsGeo = psGeo.executeQuery()) {
+                        if (rsGeo.next()) {
+                            GeoID = rsGeo.getLong("GeonameID");
                         }
-                        fw.flush();
-                        fw.close();
-                        /**
-                         * Generazione finestra di dialogo con conferma di inserimento
-                         */
-                        JOptionPane.showMessageDialog(null, "Inserimento effettuato con successo!","Successo!", JOptionPane.INFORMATION_MESSAGE);
-                        /**
-                         * Chiusura finestra di dialogo
-                         */
-                        this.dispose();
-                    }catch(Exception e){}
+                    }
                 }
-            }catch(NumberFormatException e){
-                /**
-                 * Generazione finestra di errore con specifica dell'errore (parametri non numerici)
-                 */
-                JOptionPane.showMessageDialog(null, "Devi inserire un numero!","Errore!", JOptionPane.ERROR_MESSAGE);
+
+                // Insert climatic parameters
+                String sqlInsert = "INSERT INTO ParametriClimatici (GeonameID, IDCentro, Vento, Umidita, Pressione, Temperatura, Precipitazioni, Altitudine, Massa, Note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                try (PreparedStatement psInsert = conn.prepareStatement(sqlInsert)) {
+                    int vento = Integer.parseInt(ventoField.getText());
+                    int umidita = Integer.parseInt(umiditaField.getText());
+                    int pressione = Integer.parseInt(pressioneField.getText());
+                    int temperatura = Integer.parseInt(temperaturaField.getText());
+                    int precipitazioni = Integer.parseInt(precipitazioniField.getText());
+                    int alt = Integer.parseInt(altField.getText());
+                    int mass = Integer.parseInt(massField.getText());
+
+                    psInsert.setLong(1, GeoID);
+                    psInsert.setInt(2, IDCentro);
+                    psInsert.setInt(3, vento);
+                    psInsert.setInt(4, umidita);
+                    psInsert.setInt(5, pressione);
+                    psInsert.setInt(6, temperatura);
+                    psInsert.setInt(7, precipitazioni);
+                    psInsert.setInt(8, alt);
+                    psInsert.setInt(9, mass);
+                    psInsert.setString(10, noteArea.getText().isEmpty() ? "Nessun commento disponibile!" : noteArea.getText());
+
+                    psInsert.executeUpdate();
+                    JOptionPane.showMessageDialog(null, "Inserimento effettuato con successo!", "Successo!", JOptionPane.INFORMATION_MESSAGE);
+                    this.dispose();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Errore durante l'inserimento dei dati nel database: " + e.getMessage(), "Errore!", JOptionPane.ERROR_MESSAGE);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Devi inserire un numero!", "Errore!", JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_inserisciActionPerformed
