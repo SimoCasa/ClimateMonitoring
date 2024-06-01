@@ -322,11 +322,8 @@ public class Registrazione extends JDialog {
             }
             JOptionPane.showMessageDialog(null, "Dati Mancanti : \n" + f, "Error", JOptionPane.ERROR_MESSAGE);
         } else {
-            String dbURL = "jdbc:postgresql://localhost:5432/ClimateMonitoring";
-            String user = "postgres";
-            String pass = "password";
             
-            try (Connection conn = DriverManager.getConnection(dbURL, user, pass)) {
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
                 String centroNome = centriDrop.getSelectedItem().toString();
                 String getCentroIdSql = "SELECT idcentro FROM centromonitoraggio WHERE nome = ?";
                 PreparedStatement getCentroIdStmt = conn.prepareStatement(getCentroIdSql);
